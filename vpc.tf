@@ -1,9 +1,9 @@
-# VPC creating steps
+# copied from daws86s git repository
+# VPC
 resource "aws_vpc" "main" {
   cidr_block       = var.vpc_cidr
   instance_tenancy = "default"
   enable_dns_hostnames = true
-  enable_dns_support = true
 
   tags = merge(
     var.vpc_tags,
@@ -14,11 +14,11 @@ resource "aws_vpc" "main" {
   )
 }
 
-# IGW creating steps
+# IGW
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 
-  tags = merge (
+  tags = merge(
     var.igw_tags,
     local.common_tags,
     {
@@ -27,8 +27,7 @@ resource "aws_internet_gateway" "main" {
   )
 }
 
-
-# Public subnet creatign steps
+# Public Subnets
 resource "aws_subnet" "public" {
   count = length(var.public_subnet_cidrs)
   vpc_id     = aws_vpc.main.id
@@ -36,7 +35,7 @@ resource "aws_subnet" "public" {
   availability_zone = local.az_names[count.index]
   map_public_ip_on_launch = true
 
-  tags = merge (
+  tags = merge(
     var.public_subnet_tags,
     local.common_tags,
     {
@@ -46,14 +45,14 @@ resource "aws_subnet" "public" {
 }
 
 
-# Private subnet creating steps
+# Private Subnets
 resource "aws_subnet" "private" {
   count = length(var.private_subnet_cidrs)
   vpc_id     = aws_vpc.main.id
   cidr_block = var.private_subnet_cidrs[count.index]
   availability_zone = local.az_names[count.index]
 
-  tags = merge (
+  tags = merge(
     var.private_subnet_tags,
     local.common_tags,
     {
@@ -62,14 +61,14 @@ resource "aws_subnet" "private" {
   )
 }
 
-# Database subnet creating steps
+# Database Subnets
 resource "aws_subnet" "database" {
   count = length(var.database_subnet_cidrs)
   vpc_id     = aws_vpc.main.id
   cidr_block = var.database_subnet_cidrs[count.index]
   availability_zone = local.az_names[count.index]
 
-  tags = merge (
+  tags = merge(
     var.database_subnet_tags,
     local.common_tags,
     {
@@ -79,25 +78,25 @@ resource "aws_subnet" "database" {
 }
 
 
-# Public Route table creating steps
+# Public Route Table
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
 
-  tags = merge (
+  tags = merge(
     var.public_route_table_tags,
     local.common_tags,
     {
-        Name = "${local.common_name_suffix}-pubic"
+        Name = "${local.common_name_suffix}-public"
     }
   )
 }
 
 
-# Private Route table creating steps
+# Private Route Table
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.main.id
 
-  tags = merge (
+  tags = merge(
     var.private_route_table_tags,
     local.common_tags,
     {
@@ -107,11 +106,11 @@ resource "aws_route_table" "private" {
 }
 
 
-# Databse Route table creating steps
+# Database Route Table
 resource "aws_route_table" "database" {
   vpc_id = aws_vpc.main.id
 
-  tags = merge (
+  tags = merge(
     var.database_route_table_tags,
     local.common_tags,
     {
@@ -120,18 +119,18 @@ resource "aws_route_table" "database" {
   )
 }
 
-# Public Route creating steps
+# Public Route
 resource "aws_route" "public" {
   route_table_id            = aws_route_table.public.id
   destination_cidr_block    = "0.0.0.0/0"
   gateway_id = aws_internet_gateway.main.id
 }
 
-# Ellastic IP creating steps
+# Elastic IP
 resource "aws_eip" "nat" {
   domain   = "vpc"
 
-  tags = merge (
+  tags = merge(
     var.eip_tags,
     local.common_tags,
     {
@@ -140,12 +139,13 @@ resource "aws_eip" "nat" {
   )
 }
 
-# NAT gateway creating steps
+
+# NAT gateway
 resource "aws_nat_gateway" "nat" {
   allocation_id = aws_eip.nat.id
   subnet_id     = aws_subnet.public[0].id
 
- tags = merge (
+  tags = merge(
     var.nat_gateway_tags,
     local.common_tags,
     {
@@ -158,14 +158,14 @@ resource "aws_nat_gateway" "nat" {
   depends_on = [aws_internet_gateway.main]
 }
 
-# Private egress route through NAT steps
+# Private egress route through NAT
 resource "aws_route" "private" {
   route_table_id            = aws_route_table.private.id
   destination_cidr_block    = "0.0.0.0/0"
   nat_gateway_id = aws_nat_gateway.nat.id
 }
 
-# Database egress route through NAT steps
+# Database egress route through NAT
 resource "aws_route" "database" {
   route_table_id            = aws_route_table.database.id
   destination_cidr_block    = "0.0.0.0/0"
@@ -173,19 +173,19 @@ resource "aws_route" "database" {
 }
 
 resource "aws_route_table_association" "public" {
-  count = length(var.public_subnet_cidrs)  
+  count = length(var.public_subnet_cidrs)
   subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public.id
 }
 
 resource "aws_route_table_association" "private" {
-  count = length(var.private_subnet_cidrs)  
+  count = length(var.private_subnet_cidrs)
   subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private.id
 }
 
 resource "aws_route_table_association" "database" {
-  count = length(var.database_subnet_cidrs)  
+  count = length(var.database_subnet_cidrs)
   subnet_id      = aws_subnet.database[count.index].id
   route_table_id = aws_route_table.database.id
 }

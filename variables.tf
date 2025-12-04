@@ -1,14 +1,15 @@
+# copied from daws86s git repository
 variable "vpc_cidr" {
-    type = string
-    description = "please provide vpc cidr"
+  type        = string
+  description = "Please provide VPC CIDR"
 }
 
 variable "project_name" {
-    type = string 
+  type = string
 }
 
 variable "environment" {
-    type = string
+  type = string
 }
 
 variable "vpc_tags" {
@@ -30,6 +31,7 @@ variable "public_subnet_tags" {
     default = {}
 }
 
+
 variable "private_subnet_cidrs" {
     type = list
 }
@@ -49,31 +51,31 @@ variable "database_subnet_tags" {
 }
 
 variable "public_route_table_tags" {
-    type = map 
+    type = map
     default = {}
 }
 
 variable "private_route_table_tags" {
-    type = map 
+    type = map
     default = {}
 }
 
 variable "database_route_table_tags" {
-    type = map 
+    type = map
     default = {}
 }
 
 variable "eip_tags" {
-    type = map 
+    type = map
     default = {}
 }
 
 variable "nat_gateway_tags" {
-    type = map 
+    type = map
     default = {}
 }
 
 variable "is_peering_required" {
-    type = bool 
+    type = bool
     default = true
 }
