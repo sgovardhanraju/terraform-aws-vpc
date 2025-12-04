@@ -1,3 +1,4 @@
+# copied from daws86s git repository
 data "aws_availability_zones" "available" {
   state = "available"
 }
